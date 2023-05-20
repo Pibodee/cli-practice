@@ -1,3 +1,4 @@
+const { request } = require("express");
 const {
   getTasksService,
   getTaskService,
@@ -9,8 +10,8 @@ const {
 const { catchAsync } = require("../utils/catchAsync");
 
 let getTasks = async (req, res) => {
-  const tasks = await getTasksService();
-
+  const { page = 1, limit = 10, completed } = req.query;
+  const tasks = await getTasksService(page, limit, completed);  
   res.status(200).json(tasks);
 };
 
@@ -43,15 +44,13 @@ const updateTask = async (req, res, next) => {
   }
 };
 
-const deleteTask = async (req, res, next) => {
-  try {
+let deleteTask = async (req, res, next) => {
     const { taskId } = req.params;
-    const task = await deleteTaskService(taskId);
+    await deleteTaskService(taskId);
 
-    res.status(200).json(taskId);
-  } catch (error) {
-    next(error);
-  }
-};
+    res.status(200).json({taskId});
+}
+
+deleteTask = catchAsync(deleteTask)
 
 module.exports = { getTasks, getTask, createTask: catchAsync(createTask), updateTask, deleteTask };
