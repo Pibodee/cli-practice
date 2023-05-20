@@ -6,25 +6,21 @@ const {
   deleteTaskService,
 } = require("../services/taskServices");
 
-const getTasks = async (req, res, next) => {
-  try {const tasks = await getTasksService();
+const { catchAsync } = require("../utils/catchAsync");
 
-        res.status(200).json(tasks);
-    }
-  catch (error) {
-      next(error)
-    }
+let getTasks = async (req, res) => {
+  const tasks = await getTasksService();
+
+  res.status(200).json(tasks);
 };
 
-const getTask = async (req, res, next) => {
-  try {
-    const { taskId } = req.params;
-    const task = await getTaskService(taskId);
-    res.status(200).json(task);
-  } catch (error) {
-    next(error);
-  }
-};
+getTasks = catchAsync(getTasks);
+
+const getTask = catchAsync(async (req, res) => {
+  const { taskId } = req.params;
+  const task = await getTaskService(taskId);
+  res.status(200).json(task);
+});
 
 const createTask = async (req, res, next) => {
   try {
@@ -58,4 +54,4 @@ const deleteTask = async (req, res, next) => {
   }
 };
 
-module.exports = {getTasks, getTask, createTask, updateTask, deleteTask}
+module.exports = { getTasks, getTask, createTask: catchAsync(createTask), updateTask, deleteTask };

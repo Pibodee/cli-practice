@@ -1,65 +1,37 @@
-const fs = require("fs/promises");
-const crypto = require("crypto");
+const { request } = require('express');
+const {Task} = require('../models/Task')
+const { HttpError } = require("../utils/HttpError");
 
-const path = require("path");
-const { HttpError } = require("../utils/Http.error");
-
-// const dbPath = path.join(__dirname, "..", "db", "tasks.json");
-const dbPath = path.join(process.cwd(), "db", "tasks.json");
 
 const getTasksService = async () => {
-  const tasks = await fs.readFile(dbPath);
-  return JSON.parse(tasks);
+  return await Task.find();
 };
 
 const getTaskService = async (id) => {
-  const tasks = await getTasksService();
-  const task = tasks.find((task) => task.id === id);
+  const task = await Task.findById(id);
   if (!task) {
-    throw new HttpError(404, "task not found");
+    new HttpError(404, 'Task not found!')
   }
-  return task;
+  return task
 };
 
 const createTaskService = async (data) => {
-  const tasks = await getTasksService();
-  const newTask = {
-    id: crypto.randomUUID(),
-    ...data,
-  };
-  tasks.push(newTask);
-  await fs.writeFile(dbPath, JSON.stringify(tasks, null, 2));
-  return newTask;
+  return await Task.create(data)
 };
 
-const updateTaskService = async (id, { title, completed }) => {
-  const tasks = await getTasksService();
-  const index = tasks.findIndex((task) => task.id === id);
-  if (index === -1) {
-    throw new HttpError(404, "task not found");
+const updateTaskService = async (id, data) => {
+  const task = await Task.findByIdAndUpdate(id, data, { new: true });
+  if (!task) {
+    new HttpError(404, "Task not found!");
   }
-
-    tasks[index] = {
-    id : tasks[index].id,
-    title,
-    completed,
-  };
-
-  await fs.writeFile(dbPath, JSON.stringify(tasks, null, 2));
-
-  return tasks[index];
+  return task
 };
 
 const deleteTaskService = async (id) => {
-  const tasks = await getTasksService();
-  const index = tasks.findIndex((task) => task.id === id);
-  if (index === -1) {
-    throw new HttpError(404, "task not found");
+  const task = await Task.findByIdAndDelete(id)
+  if (!task) {
+    new HttpError(404, "Task not found!");
   }
-
-  tasks.splice(index, 1);
-  await fs.writeFile(dbPath, JSON.stringify(tasks, null, 2));
-
   return id;
 };
 
