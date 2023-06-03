@@ -3,9 +3,9 @@ const {Task} = require('../models/Task')
 const { HttpError } = require("../utils/HttpError");
 
 
-const getTasksService = async (page, limit, completed) => {
+const getTasksService = async (userId, page, limit, completed) => {
   const skip = (page - 1) * limit;
-  const filter = {}
+  const filter = {owner: userId}
   if (completed === 'true') {
     filter.completed = true
   }
@@ -15,28 +15,32 @@ const getTasksService = async (page, limit, completed) => {
   return await Task.find(filter).skip(skip).limit(limit);
 };
 
-const getTaskService = async (id) => {
-  const task = await Task.findById(id);
+const getTaskService = async (userId, id) => {
+  const task = await Task.findOne({owner: userId, _id: id});
   if (!task) {
   throw  new HttpError(404, 'Task not found!')
   }
   return task
 };
 
-const createTaskService = async (data) => {
-  return await Task.create(data)
+const createTaskService = async (userId, data) => {
+  return await Task.create({...data, owner: userId})
 };
 
-const updateTaskService = async (id, data) => {
-  const task = await Task.findByIdAndUpdate(id, data, { new: true });
+const updateTaskService = async (userId, id, data) => {
+  const task = await Task.findOneAndUpdate(
+    { owner: userId, _id: id },
+    data,
+    { new: true }
+  );
   if (!task) {
     throw new HttpError(404, "Task not found!");
   }
   return task
 };
 
-const deleteTaskService = async (id) => {
-  const task = await Task.findByIdAndDelete(id)
+const deleteTaskService = async (userId, id) => {
+  const task = await Task.findOneAndDelete({ owner: userId, _id: id });
   if (!task) {
     throw new HttpError(404, "Task not found!");
   }
